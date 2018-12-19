@@ -2,9 +2,13 @@ function MemoryTester() {
   //number of buttons injected into the DOM
   this.buttonNumber = 0;
   //position of the first button
-  this.marginTop = 300;
+  this.marginTop = 200;
   //the table where are referenced the divs into the dom
   this.newDom = [];
+
+  this.t0usedJSHeapSize = window.performance.memory.usedJSHeapSize;
+
+  this.prevHeapSize = null;
 
   this.cleanPage = function() {
     var _length = document.body.childNodes.length;
@@ -44,10 +48,11 @@ function MemoryTester() {
         var b = getRandomInt(0, 255);
         return 'rgb(' + r + ', ' + g + ', ' + b + ')';
     }
-    for (var i = 0; i < 10000; i++) {
+    for (var i = 0; i < 50000; i++) {
       var color = getRandomColor();
       var div = document.createElement("DIV");
       div.appendChild(document.createTextNode("Hello World"));
+      div.setAttribute("class", "hello");
       div.setAttribute("style", "display:inline-block;padding:5px;border: none;cursor:pointer;background:" + color);
       document.body.appendChild(div);
       this.newDom.push(div);
@@ -61,7 +66,9 @@ function MemoryTester() {
     createButton : this.createButton,
     newDom : this.newDom,
     buttonNumber : this.buttonNumber,
-    marginTop : this.marginTop
+    marginTop : this.marginTop,
+    t0usedJSHeapSize : this.t0usedJSHeapSize,
+    prevHeapSize : this.prevHeapSize
   }
 }
 //instanciation
@@ -72,12 +79,10 @@ memoryTester.cleanPage();
 
 //button Diagnose to check the state of the JS memory
 var diagnoseMe = memoryTester.createButton("Diagnose Me", '', function() {
-var prevHeapSize = window.performance.memory.usedJSHeapSize;
-var beginAt = prevHeapSize;
-console.log("JS Memory state at the begining : " + (beginAt / 1000000) + " Mb");
-console.log ("previous JS Memory state : " + (prevHeapSize / 1000000) + " Mb");
-console.log ("current JS Memory state : " +  (window.performance.memory.usedJSHeapSize/1000000) + " Mb");
-prevHeapSize = window.performance.memory.usedJSHeapSize;
+console.log("used JS Heap Size at t0 : " + (memoryTester.t0usedJSHeapSize) + " bytes");
+console.log ("previous JS Memory state registred : " + (memoryTester.prevHeapSize) + " bytes");
+console.log ("current JS Memory state : " +  (window.performance.memory.usedJSHeapSize) + " bytes");
+memoryTester.prevHeapSize = window.performance.memory.usedJSHeapSize;
 });
 
 //button startMe to inject div to the DOM
@@ -86,7 +91,7 @@ var startMe = memoryTester.createButton("Start Me", '', function() {
 });
 
 //button addListeners to add a listener to the divs that has been injected
-var addListeners = memoryTester.createButton("Add listeners", '', function() {
+var addListeners = memoryTester.createButton("Add listeners to all DIV.hello", '', function() {
 if (!memoryTester.newDom.length) {
   return false;
 }
@@ -98,6 +103,12 @@ for (var i = memoryTester.newDom.length - 1 ; i >= 3; i--) {
 });
 
 //button emptyMe, empty the DOM
-var emptyMe = memoryTester.createButton("Empty Me", '', function() {
+var emptyTheDOM = memoryTester.createButton("Empty the DOM", '', function() {
   memoryTester.cleanPage();
+});
+
+//button emptyMe, empty the DOM
+var destroyTheInstance = memoryTester.createButton("Destroy the Instance", '', function() {
+  memoryTester = void(0);
+  console.log(window.performance.memory);
 });
